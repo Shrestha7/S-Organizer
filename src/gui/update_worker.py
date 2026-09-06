@@ -104,7 +104,6 @@ def create_update_script(new_exe_path: str) -> str:
     new_exe = Path(new_exe_path).resolve()
     app_dir = new_exe.parent
     target_exe = app_dir / "S-Organizer.exe"
-    temp_exe = app_dir / "S-Organizer.exe.tmp"
     backup_exe = app_dir / "S-Organizer.exe.old"
 
     script_path = app_dir / "_update.bat"

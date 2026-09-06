@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import shutil
 from pathlib import Path
 
 from PyQt6.QtCore import QThread, pyqtSignal
@@ -29,6 +28,12 @@ from src.core.duplicate_detector import (
     DuplicateGroup,
     find_duplicates,
     get_duplicate_stats,
+)
+from src.core.file_operations import (
+    ConflictResolution,
+    FileAction,
+    FileOperation,
+    execute_operation,
 )
 
 logger = logging.getLogger(__name__)
@@ -160,6 +165,11 @@ class DuplicatePanel(QWidget):
         self.select_all_button.setEnabled(False)
         button_layout.addWidget(self.select_all_button)
 
+        self.export_button = QPushButton("Export to CSV")
+        self.export_button.clicked.connect(self._export_to_csv)
+        self.export_button.setEnabled(False)
+        button_layout.addWidget(self.export_button)
+
         action_layout.addLayout(button_layout)
 
         layout.addWidget(action_group)
@@ -212,6 +222,7 @@ class DuplicatePanel(QWidget):
         has_results = len(duplicates) > 0
         self.apply_button.setEnabled(has_results)
         self.select_all_button.setEnabled(has_results)
+        self.export_button.setEnabled(has_results)
 
     def _on_scan_error(self, error_msg: str) -> None:
         self.scan_button.setEnabled(True)
@@ -335,12 +346,32 @@ class DuplicatePanel(QWidget):
             try:
                 if action_id == 1:  # Move
                     dest_path = Path(self.move_dest_edit.text()) / file_path.name
-                    shutil.move(str(file_path), str(dest_path))
-                    processed += 1
+                    result = execute_operation(
+                        FileOperation(
+                            action=FileAction.MOVE,
+                            source=Path(file_path),
+                            destination=dest_path,
+                        ),
+                        ConflictResolution.OVERWRITE,
+                    )
+                    if result.success:
+                        processed += 1
+                    else:
+                        logger.error("Failed to move %s: %s", file_path, result.error)
+                        errors += 1
                 elif action_id == 2:  # Delete
-                    from send2trash import send2trash
-                    send2trash(str(file_path))
-                    processed += 1
+                    result = execute_operation(
+                        FileOperation(
+                            action=FileAction.DELETE,
+                            source=Path(file_path),
+                        ),
+                        ConflictResolution.OVERWRITE,
+                    )
+                    if result.success:
+                        processed += 1
+                    else:
+                        logger.error("Failed to delete %s: %s", file_path, result.error)
+                        errors += 1
                 else:  # Keep original (skip originals)
                     processed += 1
             except Exception as e:
@@ -355,3 +386,72 @@ class DuplicatePanel(QWidget):
 
         # Re-scan
         self._start_scan()
+
+    def _export_to_csv(self) -> None:
+        """Export duplicate results to CSV file."""
+        if not self._duplicates:
+            QMessageBox.warning(self, "Error", "No duplicates to export.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export to CSV",
+            "duplicates.csv",
+            "CSV Files (*.csv);;All Files (*)",
+        )
+
+        if not file_path:
+            return
+
+        try:
+            import csv
+
+            with open(file_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["Group", "File", "Size", "Modified", "Path"])
+
+                group_num = 1
+                for group in self._duplicates:
+                    # Write original
+                    orig = group.original
+                    try:
+                        size = orig.stat().st_size
+                        size_str = self._format_size(size)
+                    except OSError:
+                        size_str = "N/A"
+
+                    try:
+                        import datetime
+                        mtime = datetime.datetime.fromtimestamp(orig.stat().st_mtime)
+                        date_str = mtime.strftime("%Y-%m-%d %H:%M")
+                    except OSError:
+                        date_str = "N/A"
+
+                    writer.writerow([group_num, orig.name, size_str, date_str, str(orig)])
+
+                    # Write duplicates
+                    for dup in group.duplicates:
+                        try:
+                            size = dup.stat().st_size
+                            size_str = self._format_size(size)
+                        except OSError:
+                            size_str = "N/A"
+
+                        try:
+                            mtime = datetime.datetime.fromtimestamp(dup.stat().st_mtime)
+                            date_str = mtime.strftime("%Y-%m-%d %H:%M")
+                        except OSError:
+                            date_str = "N/A"
+
+                        writer.writerow([group_num, dup.name, size_str, date_str, str(dup)])
+
+                    group_num += 1
+
+            QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Exported {len(self._duplicates)} duplicate groups to:\n{file_path}",
+            )
+
+        except Exception as e:
+            QMessageBox.warning(self, "Export Error", f"Failed to export: {e}")

@@ -29,6 +29,8 @@ class AppConfig:
         auto_start: Start monitoring on app launch.
         minimize_to_tray: Minimize to system tray.
         notifications: Show desktop notifications.
+        log_file: Path to log file (empty for stdout only).
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR).
     """
 
     rules_dir: str = "rules"
@@ -41,6 +43,8 @@ class AppConfig:
     theme: str = "light"
     window_width: int = 1024
     window_height: int = 768
+    log_file: str = ""
+    log_level: str = "INFO"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -55,6 +59,8 @@ class AppConfig:
             "theme": self.theme,
             "window_width": self.window_width,
             "window_height": self.window_height,
+            "log_file": self.log_file,
+            "log_level": self.log_level,
         }
 
     @classmethod
@@ -71,6 +77,8 @@ class AppConfig:
             theme=data.get("theme", "light"),
             window_width=data.get("window_width", 1024),
             window_height=data.get("window_height", 768),
+            log_file=data.get("log_file", ""),
+            log_level=data.get("log_level", "INFO"),
         )
 
 

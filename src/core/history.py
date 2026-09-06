@@ -202,7 +202,7 @@ class History:
                 return FileOperation(
                     source=op.destination,
                     action=FileAction.MOVE,
-                    destination=op.source.parent,
+                    destination=op.source,
                     rule_name="undo",
                 )
 

@@ -23,8 +23,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.template_browser import TemplateBrowser
 from src.main import FileOrganizer
 from src.rules.base import Rule, RuleAction, RuleActionConfig, RuleMatch, RuleTrigger
+from src.rules.matchers import parse_size
 
 
 class RuleEditor(QWidget):
@@ -75,6 +77,10 @@ class RuleEditor(QWidget):
         self.duplicate_button = QPushButton("Duplicate")
         self.duplicate_button.clicked.connect(self._duplicate_rule)
         button_layout.addWidget(self.duplicate_button)
+
+        self.template_button = QPushButton("Templates")
+        self.template_button.clicked.connect(self._open_templates)
+        button_layout.addWidget(self.template_button)
 
         left_layout.addLayout(button_layout)
 
@@ -229,8 +235,8 @@ class RuleEditor(QWidget):
         self.extensions_edit.setText(", ".join(rule.match.extensions))
 
         self.name_pattern_edit.setText(rule.match.name_pattern)
-        self.min_size_edit.setText(str(rule.match.min_size) if rule.match.min_size else "")
-        self.max_size_edit.setText(str(rule.match.max_size) if rule.match.max_size else "")
+        self.min_size_edit.setText(self._format_size(rule.match.min_size))
+        self.max_size_edit.setText(self._format_size(rule.match.max_size))
         self.min_age_edit.setText(str(rule.match.min_age_days) if rule.match.min_age_days else "")
         self.max_age_edit.setText(str(rule.match.max_age_days) if rule.match.max_age_days else "")
         keywords = rule.match.content_keywords
@@ -247,7 +253,11 @@ class RuleEditor(QWidget):
         elif action_type == RuleAction.DELETE:
             self.delete_radio.setChecked(True)
 
-        self.destination_edit.setText(rule.action.destination)
+        # Load destination or template based on action type
+        if action_type == RuleAction.RENAME:
+            self.destination_edit.setText(rule.action.template)
+        else:
+            self.destination_edit.setText(rule.action.destination)
 
     def _save_rule(self) -> None:
         """Save the current rule."""
@@ -260,9 +270,9 @@ class RuleEditor(QWidget):
         extensions_text = self.extensions_edit.text().strip()
         extensions = [ext.strip() for ext in extensions_text.split(",") if ext.strip()]
 
-        # Parse size
-        min_size = int(self.min_size_edit.text()) if self.min_size_edit.text() else None
-        max_size = int(self.max_size_edit.text()) if self.max_size_edit.text() else None
+        # Parse size (supports human-readable like "1MB", "100KB")
+        min_size = parse_size(self.min_size_edit.text()) if self.min_size_edit.text() else None
+        max_size = parse_size(self.max_size_edit.text()) if self.max_size_edit.text() else None
 
         # Parse age
         min_age = int(self.min_age_edit.text()) if self.min_age_edit.text() else None
@@ -281,6 +291,15 @@ class RuleEditor(QWidget):
             3: RuleAction.DELETE,
         }
 
+        action_type = action_types.get(action_id, RuleAction.MOVE)
+        dest_text = self.destination_edit.text()
+
+        # Set destination or template based on action type
+        if action_type == RuleAction.RENAME:
+            action_config = RuleActionConfig(type=action_type, template=dest_text)
+        else:
+            action_config = RuleActionConfig(type=action_type, destination=dest_text)
+
         # Create rule
         rule = Rule(
             name=name,
@@ -298,10 +317,7 @@ class RuleEditor(QWidget):
                 max_age_days=max_age,
                 content_keywords=content_keywords,
             ),
-            action=RuleActionConfig(
-                type=action_types.get(action_id, RuleAction.MOVE),
-                destination=self.destination_edit.text(),
-            ),
+            action=action_config,
         )
 
         # Update or add
@@ -386,11 +402,52 @@ class RuleEditor(QWidget):
         self._load_rules()
         self.rules_changed.emit()
 
+    def _open_templates(self) -> None:
+        """Open the template browser dialog."""
+        dialog = TemplateBrowser(self)
+        dialog.template_selected.connect(self._apply_template)
+        dialog.exec()
+
+    def _apply_template(self, template: dict) -> None:
+        """Apply a template to create a new rule."""
+        rule_data = template["rule"]
+
+        # Create rule from template
+        rule = Rule.from_dict(rule_data)
+
+        # Generate unique name
+        base_name = rule.name
+        counter = 1
+        while self.organizer.rule_engine.get_rule(rule.name):
+            rule.name = f"{base_name} ({counter})"
+            counter += 1
+
+        self.organizer.rule_engine.add_rule(rule)
+        self._load_rules()
+        self.rules_changed.emit()
+
+        # Select the new rule
+        for i in range(self.rule_list.count()):
+            item = self.rule_list.item(i)
+            if item.data(Qt.ItemDataRole.UserRole).name == rule.name:
+                self.rule_list.setCurrentItem(item)
+                break
+
     def _browse_folder(self) -> None:
         """Browse for a folder."""
         folder = QFileDialog.getExistingDirectory(self, "Select Folder")
         if folder:
             self.folder_edit.setText(folder)
+
+    def _format_size(self, size_bytes: int | None) -> str:
+        """Format size in bytes to human-readable string."""
+        if size_bytes is None:
+            return ""
+        for unit in ["B", "KB", "MB", "GB"]:
+            if size_bytes < 1024:
+                return f"{size_bytes:.0f}{unit}" if unit == "B" else f"{size_bytes:.0f}{unit}"
+            size_bytes /= 1024
+        return f"{size_bytes:.0f}TB"
 
     def refresh(self) -> None:
         """Refresh the rule list."""

@@ -9,7 +9,9 @@ import pytest
 
 from src.rules.base import Rule, RuleAction, RuleActionConfig, RuleMatch, RuleTrigger
 from src.rules.matchers import (
+    matches_age,
     matches_extensions,
+    matches_keywords,
     matches_name_pattern,
     matches_size,
     parse_size,
@@ -79,6 +81,46 @@ class TestMatchers:
         assert parse_size("1MB") == 1024**2
         assert parse_size("1GB") == 1024**3
         assert parse_size("10MB") == 10 * 1024**2
+
+    def test_parse_size_with_spaces(self):
+        """Test size parsing with spaces."""
+        assert parse_size(" 1 KB ") == 1024
+        assert parse_size("10 MB") == 10 * 1024**2
+
+    def test_matches_age(self, test_files):
+        """Test age matching."""
+        # All files are new, so they should match min_age=0
+        assert matches_age(test_files["txt"], min_age_days=0)
+        # They should not match min_age=100 (100 days old)
+        assert not matches_age(test_files["txt"], min_age_days=100)
+        # max_age=100 should match (files are new)
+        assert matches_age(test_files["txt"], max_age_days=100)
+
+    def test_matches_keywords(self, test_files):
+        """Test keyword matching."""
+        # File contains "Hello world"
+        assert matches_keywords(test_files["txt"], ["Hello"])
+        assert matches_keywords(test_files["txt"], ["hello"])  # Case-insensitive
+        assert not matches_keywords(test_files["txt"], ["Nonexistent"])
+        assert matches_keywords(test_files["txt"], [])  # Empty = match all
+
+    def test_match_file_composite(self, test_files):
+        """Test composite file matching with multiple criteria."""
+        from src.rules.base import RuleMatch
+
+        # Should match - all criteria satisfied
+        match_config = RuleMatch(
+            extensions=[".txt"],
+            name_pattern="*.txt",
+            max_size=1024,
+        )
+        assert matches_name_pattern(test_files["txt"], match_config.name_pattern)
+        assert matches_extensions(test_files["txt"], match_config.extensions)
+        assert matches_size(test_files["txt"], max_size=match_config.max_size)
+
+        # Should not match - wrong extension
+        match_config2 = RuleMatch(extensions=[".pdf"])
+        assert not matches_extensions(test_files["txt"], match_config2.extensions)
 
 
 class TestRuleMatch:

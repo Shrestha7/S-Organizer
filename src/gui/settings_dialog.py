@@ -79,6 +79,27 @@ class SettingsDialog(QDialog):
 
         layout.addWidget(appearance_group)
 
+        # Logging settings
+        logging_group = QGroupBox("Logging")
+        logging_layout = QFormLayout(logging_group)
+
+        self.log_level_combo = QComboBox()
+        self.log_level_combo.addItems(["DEBUG", "INFO", "WARNING", "ERROR"])
+        self.log_level_combo.setCurrentText(self.organizer.config.log_level)
+        logging_layout.addRow("Log level:", self.log_level_combo)
+
+        from PyQt6.QtWidgets import QLineEdit
+        self.log_file_edit = QLineEdit()
+        self.log_file_edit.setText(self.organizer.config.log_file)
+        self.log_file_edit.setPlaceholderText("Leave empty for stdout only")
+        logging_layout.addRow("Log file:", self.log_file_edit)
+
+        self.log_browse_button = QPushButton("Browse")
+        self.log_browse_button.clicked.connect(self._browse_log_file)
+        logging_layout.addRow("", self.log_browse_button)
+
+        layout.addWidget(logging_group)
+
         # Watched folders
         folders_group = QGroupBox("Watched Folders")
         folders_layout = QVBoxLayout(folders_group)
@@ -122,6 +143,17 @@ class SettingsDialog(QDialog):
         if current >= 0:
             self.folders_list.takeItem(current)
 
+    def _browse_log_file(self) -> None:
+        """Browse for log file path."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Select Log File",
+            "",
+            "Log Files (*.log);;All Files (*)",
+        )
+        if file_path:
+            self.log_file_edit.setText(file_path)
+
     def _save_settings(self) -> None:
         """Save settings and close dialog."""
         # Update config
@@ -130,6 +162,8 @@ class SettingsDialog(QDialog):
         self.organizer.config.minimize_to_tray = self.minimize_to_tray_checkbox.isChecked()
         self.organizer.config.notifications = self.notifications_checkbox.isChecked()
         self.organizer.config.theme = self.theme_combo.currentText()
+        self.organizer.config.log_level = self.log_level_combo.currentText()
+        self.organizer.config.log_file = self.log_file_edit.text()
 
         # Update watched folders
         self.organizer.config.watched_folders = []

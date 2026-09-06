@@ -6,21 +6,25 @@ Automatic file organization with PyQt6 GUI.
 
 - **Real-time monitoring** - Watch folders and auto-organize files as they appear
 - **Rule-based sorting** - Define rules to move, copy, rename, or delete files
-- **Flexible matching** - Match by extension, name pattern, size, age, or content
+- **Flexible matching** - Match by extension, name pattern, size, age, or content keywords
 - **Content-aware sorting** - Search within PDF, DOCX, XLSX, CSV, TXT, and image EXIF data
 - **Undo support** - Reverse any file operation from history (persisted across sessions)
-- **Duplicate detection** - Find and handle duplicate files with built-in scanner
+- **Duplicate detection** - Find and handle duplicate files with CSV export
+- **Rule templates** - Browse pre-built templates when creating new rules
 - **JSON rules** - Easy to create, share, and version control rules
 - **Dark theme** - Switch between light and dark themes
 - **System tray** - Minimize to tray with notifications for file operations
 - **One-shot scan** - Scan a folder once without continuous monitoring
+- **Log to file** - Configurable file logging with rotation
+- **CLI mode** - Command-line interface for headless scanning
 - **Auto-update** - Built-in check for updates (Help menu in GUI)
+- **Windows Installer** - Proper installer that registers in Control Panel
 
 ## Installation
 
 ### Option 1: Windows Installer (Recommended)
 1. Go to [Releases](https://github.com/Shrestha7/S-Organizer/releases)
-2. Download `S-Organizer-0.3.0-Setup.exe`
+2. Download `S-Organizer-0.4.0-Setup.exe`
 3. Run the installer — it registers in **Control Panel > Programs and Features** for easy uninstall
 4. **Windows Defender Warning**: If you see a false positive warning, click "More info" → "Run anyway" or add an exclusion for the file
 
@@ -45,10 +49,24 @@ pip install -e ".[dev,content]"
 
 ## Usage
 
-### CLI Mode
+### GUI Mode (Default)
 
 ```bash
 python -m src.main
+# Or simply double-click the exe/installed shortcut
+```
+
+### CLI Mode
+
+```bash
+# One-time scan of a folder
+python -m src.main --scan ~/Downloads
+
+# Use custom config
+python -m src.main --scan ~/Downloads --config my_config.json
+
+# Show version
+python -m src.main --version
 ```
 
 ### Python API

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QMenu,
     QSystemTrayIcon,
     QWidget,
 )
+
+from src.resources import get_tray_icon
 
 
 class SystemTrayIcon(QSystemTrayIcon):
@@ -36,8 +38,8 @@ class SystemTrayIcon(QSystemTrayIcon):
         """
         super().__init__(parent)
 
-        # Set icon (using a default icon for now)
-        self.setIcon(QIcon.fromTheme("folder-sync"))
+        # Set icon
+        self.setIcon(get_tray_icon())
 
         # Create context menu
         self._create_menu()

@@ -48,7 +48,11 @@ class UpdateDownloadWorker(QThread):
         try:
             # Download to temp directory alongside current exe
             if getattr(sys, "frozen", False):
-                app_dir = Path(sys.executable).parent
+                exe_path = getattr(sys, "executable", None)
+                if exe_path:
+                    app_dir = Path(exe_path).parent
+                else:
+                    app_dir = Path.cwd()
             else:
                 app_dir = Path.cwd()
 
@@ -87,7 +91,17 @@ def create_update_script(exe_path: str) -> str:
     """
     new_exe = Path(exe_path)
     app_dir = new_exe.parent
-    old_exe = app_dir / "S-Organizer.exe"
+
+    # Try to get current executable path with fallback
+    if getattr(sys, "frozen", False):
+        exe_path = getattr(sys, "executable", None)
+        if exe_path:
+            old_exe = Path(exe_path)
+        else:
+            old_exe = app_dir / "S-Organizer.exe"
+    else:
+        old_exe = app_dir / "S-Organizer.exe"
+
     script_path = app_dir / "_update.bat"
 
     # Create the batch script

@@ -32,6 +32,17 @@ def is_frozen() -> bool:
     return getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
 
+def get_executable_path() -> str | None:
+    """Get the path of the current executable with fallback handling."""
+    try:
+        if is_frozen():
+            return sys.executable
+        return None
+    except Exception:
+        logger.warning("Failed to obtain executable path")
+        return None
+
+
 def check_for_update(current_version: str) -> UpdateInfo:
     """Check GitHub for a newer release.
 

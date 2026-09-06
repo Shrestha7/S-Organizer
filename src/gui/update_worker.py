@@ -107,9 +107,15 @@ def create_update_script(new_exe_path: str) -> str:
     script_content = f"""@echo off
 cd /d "{app_dir}"
 timeout /t 3 /nobreak >nul
-taskkill /f /im "S-Organizer.exe" >nul 2>&1
-timeout /t 1 /nobreak >nul
+taskkill /f /t /im "S-Organizer.exe" >nul 2>&1
+taskkill /f /t /im "S-Organizer.tmp" >nul 2>&1
+timeout /t 3 /nobreak >nul
+:retry_del
 del /f /q "{target_exe}" >nul 2>&1
+if exist "{target_exe}" (
+    timeout /t 2 /nobreak >nul
+    goto retry_del
+)
 move /y "{new_exe}" "{target_exe}" >nul 2>&1
 if exist "{target_exe}" (
     start "" "{target_exe}"

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import os
 import sys
 
-from PyQt6.QtCore import QProcess, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
+    QApplication,
     QLabel,
     QMainWindow,
     QMessageBox,
@@ -324,15 +324,25 @@ class MainWindow(QMainWindow):
 
     def _apply_update(self, new_exe_path: str) -> None:
         """Apply the downloaded update by launching batch script and exiting."""
+        import subprocess
         script_path = create_update_script(new_exe_path)
 
-        # Launch the update script
         if sys.platform == "win32":
-            os.startfile(script_path)
+            subprocess.Popen(
+                ["cmd", "/c", script_path],
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                close_fds=True,
+            )
         else:
-            QProcess.startDetached("sh", [script_path])
+            subprocess.Popen(
+                ["sh", script_path],
+                start_new_session=True,
+                close_fds=True,
+            )
 
-        # Exit the application
+        app = QApplication.instance()
+        if app:
+            app.quit()
         sys.exit(0)
 
     def closeEvent(self, event) -> None:  # noqa: N802

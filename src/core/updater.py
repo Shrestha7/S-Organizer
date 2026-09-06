@@ -29,7 +29,7 @@ class UpdateInfo:
 
 def is_frozen() -> bool:
     """Check if running as a PyInstaller frozen executable."""
-    return getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
+    return getattr(sys, "frozen", False)
 
 
 def get_executable_path() -> str | None:

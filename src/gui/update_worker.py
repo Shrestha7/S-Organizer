@@ -80,37 +80,41 @@ class UpdateDownloadWorker(QThread):
             self.error.emit(str(e))
 
 
-def create_update_script(exe_path: str) -> str:
+def get_app_dir() -> Path:
+    """Get the application directory reliably."""
+    if getattr(sys, "frozen", False):
+        exe = getattr(sys, "executable", None)
+        if exe:
+            return Path(exe).parent
+    return Path.cwd()
+
+
+def create_update_script(new_exe_path: str) -> str:
     """Create a batch script to replace the exe after app exits.
 
     Args:
-        exe_path: Path to the new exe file.
+        new_exe_path: Path to the new exe file.
 
     Returns:
         Path to the created batch script.
     """
-    new_exe = Path(exe_path)
+    new_exe = Path(new_exe_path).resolve()
     app_dir = new_exe.parent
-
-    # Try to get current executable path with fallback
-    if getattr(sys, "frozen", False):
-        exe_path = getattr(sys, "executable", None)
-        if exe_path:
-            old_exe = Path(exe_path)
-        else:
-            old_exe = app_dir / "S-Organizer.exe"
-    else:
-        old_exe = app_dir / "S-Organizer.exe"
+    target_exe = app_dir / "S-Organizer.exe"
 
     script_path = app_dir / "_update.bat"
 
-    # Create the batch script
     script_content = f"""@echo off
-timeout /t 2 /nobreak >nul
-del "{old_exe}"
-rename "{new_exe}" "S-Organizer.exe"
-start "" "{old_exe}"
-del "%~f0"
+cd /d "{app_dir}"
+timeout /t 3 /nobreak >nul
+taskkill /f /im "S-Organizer.exe" >nul 2>&1
+timeout /t 1 /nobreak >nul
+del /f /q "{target_exe}" >nul 2>&1
+move /y "{new_exe}" "{target_exe}" >nul 2>&1
+if exist "{target_exe}" (
+    start "" "{target_exe}"
+)
+del /f /q "%~f0" >nul 2>&1
 """
     script_path.write_text(script_content)
     return str(script_path)

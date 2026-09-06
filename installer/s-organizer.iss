@@ -2,7 +2,7 @@
 ; Requires Inno Setup 6.0+ (https://jrsoftware.org/isinfo.php)
 
 #define MyAppName "S-Organizer"
-#define MyAppVersion "0.2.0"
+#define MyAppVersion "0.3.0"
 #define MyAppPublisher "Shrestha7"
 #define MyAppURL "https://github.com/Shrestha7/S-Organizer"
 #define MyAppExeName "S-Organizer.exe"

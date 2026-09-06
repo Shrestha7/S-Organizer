@@ -113,7 +113,7 @@ def matches_age(
 def matches_keywords(file_path: Path, keywords: list[str]) -> bool:
     """Check if file content contains specified keywords.
 
-    Currently supports: PDF, DOCX, TXT, and plain text files.
+    Currently supports: PDF, DOCX, TXT, MD, XLSX, CSV, and image EXIF.
 
     Args:
         file_path: Path to the file.
@@ -134,6 +134,12 @@ def matches_keywords(file_path: Path, keywords: list[str]) -> bool:
             content = _extract_pdf_text(file_path)
         elif suffix == ".docx":
             content = _extract_docx_text(file_path)
+        elif suffix == ".xlsx":
+            content = _extract_xlsx_text(file_path)
+        elif suffix == ".csv":
+            content = _extract_csv_text(file_path)
+        elif suffix in (".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".gif", ".webp"):
+            content = _extract_image_exif(file_path)
         else:
             return False
     except Exception:
@@ -182,6 +188,97 @@ def _extract_docx_text(file_path: Path) -> str:
 
         doc = Document(str(file_path))
         return " ".join(paragraph.text for paragraph in doc.paragraphs)
+    except ImportError:
+        return ""
+    except Exception:
+        return ""
+
+
+def _extract_xlsx_text(file_path: Path) -> str:
+    """Extract text from an XLSX file.
+
+    Args:
+        file_path: Path to the XLSX file.
+
+    Returns:
+        Extracted text content.
+    """
+    try:
+        from openpyxl import load_workbook
+
+        wb = load_workbook(str(file_path), read_only=True, data_only=True)
+        text_parts = []
+        for sheet in wb.sheetnames:
+            ws = wb[sheet]
+            for row in ws.iter_rows(values_only=True):
+                for cell in row:
+                    if cell is not None:
+                        text_parts.append(str(cell))
+        wb.close()
+        return " ".join(text_parts)
+    except ImportError:
+        return ""
+    except Exception:
+        return ""
+
+
+def _extract_csv_text(file_path: Path) -> str:
+    """Extract text from a CSV file.
+
+    Args:
+        file_path: Path to the CSV file.
+
+    Returns:
+        Extracted text content.
+    """
+    try:
+        import csv
+
+        text_parts = []
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                for cell in row:
+                    if cell:
+                        text_parts.append(cell)
+        return " ".join(text_parts)
+    except Exception:
+        return ""
+
+
+def _extract_image_exif(file_path: Path) -> str:
+    """Extract EXIF metadata from an image file.
+
+    Args:
+        file_path: Path to the image file.
+
+    Returns:
+        Extracted EXIF text content.
+    """
+    try:
+        from PIL import Image
+        from PIL.ExifTags import TAGS
+
+        img = Image.open(file_path)
+        exif_data = img.getexif()
+
+        if not exif_data:
+            return ""
+
+        text_parts = []
+        for tag_id, value in exif_data.items():
+            tag_name = TAGS.get(tag_id, str(tag_id))
+            if isinstance(value, bytes):
+                continue
+            text_parts.append(f"{tag_name}: {value}")
+
+        # Also check ImageInfo for XMP data
+        if hasattr(img, "info"):
+            for key, value in img.info.items():
+                if isinstance(value, str) and len(value) > 0:
+                    text_parts.append(f"{key}: {value}")
+
+        return " ".join(text_parts)
     except ImportError:
         return ""
     except Exception:

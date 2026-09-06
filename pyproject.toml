@@ -35,6 +35,8 @@ dependencies = [
 content = [
     "PyPDF2>=3.0",
     "python-docx>=0.8",
+    "openpyxl>=3.1",
+    "Pillow>=10.0",
 ]
 dev = [
     "pytest>=7.0",

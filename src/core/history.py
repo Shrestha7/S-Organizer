@@ -68,7 +68,7 @@ class History:
     - Log all file operations
     - Undo individual operations
     - Export/import history
-    - Persistent storage
+    - Persistent storage (auto-saves to JSON)
     """
 
     def __init__(self, max_entries: int = 1000) -> None:
@@ -79,6 +79,17 @@ class History:
         """
         self.entries: list[HistoryEntry] = []
         self.max_entries = max_entries
+        self._save_path: Path | None = None
+
+    def set_save_path(self, path: Path) -> None:
+        """Set the path for automatic persistence.
+
+        Args:
+            path: Path to save history JSON file.
+        """
+        self._save_path = path
+        if path.exists():
+            self.load(path)
 
     def add(self, operation: FileOperation) -> None:
         """Add an operation to history.
@@ -100,6 +111,10 @@ class History:
             operation.destination or "deleted",
             operation.rule_name,
         )
+
+        # Auto-save if path is configured
+        if self._save_path:
+            self.save(self._save_path)
 
     def undo_last(self, count: int = 1) -> list[HistoryEntry]:
         """Undo the last N successful operations.
@@ -265,6 +280,30 @@ class History:
                 logger.error("Failed to import entry: %s", e)
 
         logger.info("Imported %d entries from %s", count, path)
+        return count
+
+    def save(self, path: Path | None = None) -> None:
+        """Save history to disk.
+
+        Args:
+            path: Path to save file. Uses configured path if None.
+        """
+        save_path = path or self._save_path
+        if save_path is None:
+            return
+        self.export_json(save_path)
+
+    def load(self, path: Path) -> int:
+        """Load history from disk.
+
+        Args:
+            path: Path to load from.
+
+        Returns:
+            Number of entries loaded.
+        """
+        count = self.import_json(path)
+        self._save_path = path
         return count
 
     @property

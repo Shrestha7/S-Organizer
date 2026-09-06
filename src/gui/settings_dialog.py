@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
@@ -17,6 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.theme import apply_theme
 from src.main import FileOrganizer
 from src.utils.config import save_config
 
@@ -65,6 +67,17 @@ class SettingsDialog(QDialog):
         general_layout.addRow("", self.notifications_checkbox)
 
         layout.addWidget(general_group)
+
+        # Appearance settings
+        appearance_group = QGroupBox("Appearance")
+        appearance_layout = QFormLayout(appearance_group)
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["light", "dark"])
+        self.theme_combo.setCurrentText(self.organizer.config.theme)
+        appearance_layout.addRow("Theme:", self.theme_combo)
+
+        layout.addWidget(appearance_group)
 
         # Watched folders
         folders_group = QGroupBox("Watched Folders")
@@ -116,11 +129,15 @@ class SettingsDialog(QDialog):
         self.organizer.config.auto_start = self.auto_start_checkbox.isChecked()
         self.organizer.config.minimize_to_tray = self.minimize_to_tray_checkbox.isChecked()
         self.organizer.config.notifications = self.notifications_checkbox.isChecked()
+        self.organizer.config.theme = self.theme_combo.currentText()
 
         # Update watched folders
         self.organizer.config.watched_folders = []
         for i in range(self.folders_list.count()):
             self.organizer.config.watched_folders.append(self.folders_list.item(i).text())
+
+        # Apply theme
+        apply_theme(self.organizer.config.theme)
 
         # Save to file
         save_config(self.organizer.config)

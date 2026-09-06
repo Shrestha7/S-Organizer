@@ -1,3 +1,3 @@
 """Core modules for file operations, monitoring, and rule execution."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

@@ -3,5 +3,7 @@ watchdog>=3.0
 send2trash>=1.8
 PyPDF2>=3.0
 python-docx>=0.8
+openpyxl>=3.1
+Pillow>=10.0
 pyinstaller>=6.0
 packaging>=21.0

@@ -50,8 +50,31 @@ class FileOrganizer:
             callback=self._on_file_event,
             debounce_ms=self.config.debounce_ms,
         )
+        self._notification_callback: callable | None = None
+
+        # Set up history persistence
+        history_path = get_data_dir() / self.config.history_dir / "history.json"
+        self.history.set_save_path(history_path)
 
         self._load_rules()
+
+    def set_notification_callback(self, callback: callable) -> None:
+        """Set a callback for notifications.
+
+        Args:
+            callback: Function that takes (title, message) arguments.
+        """
+        self._notification_callback = callback
+
+    def _notify(self, title: str, message: str) -> None:
+        """Send a notification.
+
+        Args:
+            title: Notification title.
+            message: Notification message.
+        """
+        if self._notification_callback and self.config.notifications:
+            self._notification_callback(title, message)
 
     def _load_rules(self) -> None:
         """Load rules from the rules directory."""
@@ -70,10 +93,21 @@ class FileOrganizer:
         # Process event against all rules
         results = self.rule_engine.process_event(event)
 
-        # Record results in history
+        # Record results in history and notify
         for result in results:
             if result.operation:
                 self.history.add(result.operation)
+
+                # Send notification for successful operations
+                if result.operation.success:
+                    action = result.operation.action.value.capitalize()
+                    filename = result.operation.source.name
+                    dest = result.operation.destination
+                    if dest:
+                        msg = f"{action}: {filename} -> {dest.parent}"
+                    else:
+                        msg = f"{action}: {filename}"
+                    self._notify(f"File {action}d", msg)
 
     def start(self) -> None:
         """Start monitoring configured folders."""
@@ -164,12 +198,39 @@ def main() -> None:
         from PyQt6.QtWidgets import QApplication
 
         from src.gui.main_window import MainWindow
+        from src.gui.system_tray import SystemTrayIcon
 
         app = QApplication(sys.argv)
         app.setApplicationName("S-Organizer")
 
         organizer = FileOrganizer()
         window = MainWindow(organizer)
+
+        # Apply theme
+        from src.gui.theme import apply_theme
+        apply_theme(organizer.config.theme)
+
+        # Set up system tray
+        tray_icon = SystemTrayIcon()
+
+        # Connect tray signals to window
+        tray_icon.show_window.connect(window.show)
+        tray_icon.hide_window.connect(window.hide)
+        tray_icon.start_monitoring.connect(window._start_monitoring)
+        tray_icon.stop_monitoring.connect(window._stop_monitoring)
+        tray_icon.open_settings.connect(window._open_settings)
+        tray_icon.quit_app.connect(app.quit)
+
+        # Store tray icon reference on window for notifications
+        window.tray_icon = tray_icon
+
+        # Connect window close to tray behavior
+        window.set_tray_icon(tray_icon)
+
+        # Connect organizer notifications to window
+        organizer.set_notification_callback(window._show_notification)
+
+        tray_icon.show()
         window.show()
 
         sys.exit(app.exec())

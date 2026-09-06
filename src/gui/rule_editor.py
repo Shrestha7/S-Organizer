@@ -131,6 +131,18 @@ class RuleEditor(QWidget):
         self.max_size_edit.setPlaceholderText("100MB")
         match_layout.addRow("Max size:", self.max_size_edit)
 
+        self.min_age_edit = QLineEdit()
+        self.min_age_edit.setPlaceholderText("e.g. 7")
+        match_layout.addRow("Min age (days):", self.min_age_edit)
+
+        self.max_age_edit = QLineEdit()
+        self.max_age_edit.setPlaceholderText("e.g. 30")
+        match_layout.addRow("Max age (days):", self.max_age_edit)
+
+        self.content_keywords_edit = QLineEdit()
+        self.content_keywords_edit.setPlaceholderText("invoice, report, confidential")
+        match_layout.addRow("Content keywords:", self.content_keywords_edit)
+
         right_layout.addWidget(match_group)
 
         # Action group
@@ -219,6 +231,10 @@ class RuleEditor(QWidget):
         self.name_pattern_edit.setText(rule.match.name_pattern)
         self.min_size_edit.setText(str(rule.match.min_size) if rule.match.min_size else "")
         self.max_size_edit.setText(str(rule.match.max_size) if rule.match.max_size else "")
+        self.min_age_edit.setText(str(rule.match.min_age_days) if rule.match.min_age_days else "")
+        self.max_age_edit.setText(str(rule.match.max_age_days) if rule.match.max_age_days else "")
+        keywords = rule.match.content_keywords
+        self.content_keywords_edit.setText(", ".join(keywords) if keywords else "")
 
         # Action type
         action_type = rule.action.type
@@ -248,6 +264,14 @@ class RuleEditor(QWidget):
         min_size = int(self.min_size_edit.text()) if self.min_size_edit.text() else None
         max_size = int(self.max_size_edit.text()) if self.max_size_edit.text() else None
 
+        # Parse age
+        min_age = int(self.min_age_edit.text()) if self.min_age_edit.text() else None
+        max_age = int(self.max_age_edit.text()) if self.max_age_edit.text() else None
+
+        # Parse content keywords
+        keywords_text = self.content_keywords_edit.text().strip()
+        content_keywords = [kw.strip() for kw in keywords_text.split(",") if kw.strip()]
+
         # Determine action type
         action_id = self.action_group.checkedId()
         action_types = {
@@ -270,6 +294,9 @@ class RuleEditor(QWidget):
                 name_pattern=self.name_pattern_edit.text() or "*",
                 min_size=min_size,
                 max_size=max_size,
+                min_age_days=min_age,
+                max_age_days=max_age,
+                content_keywords=content_keywords,
             ),
             action=RuleActionConfig(
                 type=action_types.get(action_id, RuleAction.MOVE),
@@ -341,6 +368,12 @@ class RuleEditor(QWidget):
                 name_pattern=rule.match.name_pattern,
                 min_size=rule.match.min_size,
                 max_size=rule.match.max_size,
+                min_age_days=rule.match.min_age_days,
+                max_age_days=rule.match.max_age_days,
+                content_keywords=(
+                    rule.match.content_keywords.copy()
+                    if rule.match.content_keywords else []
+                ),
             ),
             action=RuleActionConfig(
                 type=rule.action.type,

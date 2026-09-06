@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 
-from PyQt6.QtCore import QProcess
+from PyQt6.QtCore import QProcess, pyqtSignal
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QLabel,
@@ -20,10 +20,12 @@ from PyQt6.QtWidgets import (
 
 from src import __version__
 from src.core.updater import UpdateInfo, is_frozen
+from src.gui.duplicate_panel import DuplicatePanel
 from src.gui.history_panel import HistoryPanel
 from src.gui.monitor_panel import MonitorPanel
 from src.gui.rule_editor import RuleEditor
 from src.gui.settings_dialog import SettingsDialog
+from src.gui.system_tray import SystemTrayIcon
 from src.gui.update_worker import UpdateCheckWorker, UpdateDownloadWorker, create_update_script
 from src.main import FileOrganizer
 
@@ -35,7 +37,11 @@ class MainWindow(QMainWindow):
     - Rules tab: Manage organization rules
     - Monitor tab: View live file events
     - History tab: View and undo operations
+    - System tray integration
     """
+
+    # Signal for notifications from worker threads
+    notification = pyqtSignal(str, str)
 
     def __init__(self, organizer: FileOrganizer) -> None:
         """Initialize the main window.
@@ -45,14 +51,20 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
         self.organizer = organizer
+        self.tray_icon: SystemTrayIcon | None = None
         self._setup_ui()
         self._setup_menu()
         self._setup_status_bar()
+        self._connect_notifications()
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle("S-Organizer")
         self.setMinimumSize(800, 600)
+        self.resize(
+            self.organizer.config.window_width,
+            self.organizer.config.window_height,
+        )
 
         # Central widget with tabs
         central_widget = QWidget()
@@ -69,10 +81,12 @@ class MainWindow(QMainWindow):
         self.rule_editor = RuleEditor(self.organizer)
         self.monitor_panel = MonitorPanel(self.organizer)
         self.history_panel = HistoryPanel(self.organizer)
+        self.duplicate_panel = DuplicatePanel()
 
         self.tab_widget.addTab(self.rule_editor, "Rules")
         self.tab_widget.addTab(self.monitor_panel, "Monitor")
         self.tab_widget.addTab(self.history_panel, "History")
+        self.tab_widget.addTab(self.duplicate_panel, "Duplicates")
 
     def _setup_menu(self) -> None:
         """Set up the menu bar."""
@@ -149,16 +163,43 @@ class MainWindow(QMainWindow):
 
         self.rule_count_label.setText(f"Rules: {len(self.organizer.rule_engine.rules)}")
 
+    def set_tray_icon(self, tray_icon: SystemTrayIcon) -> None:
+        """Set the system tray icon for this window.
+
+        Args:
+            tray_icon: System tray icon instance.
+        """
+        self.tray_icon = tray_icon
+        self.tray_icon.set_monitoring_state(self.organizer.is_running)
+
+    def _connect_notifications(self) -> None:
+        """Connect notification signal to tray icon."""
+        self.notification.connect(self._show_notification)
+
+    def _show_notification(self, title: str, message: str) -> None:
+        """Show a notification via tray icon.
+
+        Args:
+            title: Notification title.
+            message: Notification message.
+        """
+        if self.tray_icon and self.organizer.config.notifications:
+            self.tray_icon.show_notification(title, message)
+
     def _start_monitoring(self) -> None:
         """Start file monitoring."""
         self.organizer.start()
         self._update_status()
+        if self.tray_icon:
+            self.tray_icon.set_monitoring_state(True)
         self.status_bar.showMessage("Monitoring started", 3000)
 
     def _stop_monitoring(self) -> None:
         """Stop file monitoring."""
         self.organizer.stop()
         self._update_status()
+        if self.tray_icon:
+            self.tray_icon.set_monitoring_state(False)
         self.status_bar.showMessage("Monitoring stopped", 3000)
 
     def _open_settings(self) -> None:
@@ -296,6 +337,25 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:  # noqa: N802
         """Handle window close event."""
+        # Minimize to tray if configured and tray icon exists
+        if self.organizer.config.minimize_to_tray and self.tray_icon:
+            event.ignore()
+            self.hide()
+            self.tray_icon.show_notification(
+                "S-Organizer", "Running in background. Click tray icon to show."
+            )
+            return
+
+        # Save window size
+        self.organizer.config.window_width = self.width()
+        self.organizer.config.window_height = self.height()
+        from src.utils.config import save_config
+        save_config(self.organizer.config)
+
         if self.organizer.is_running:
             self.organizer.stop()
+
+        # Save history before exit
+        self.organizer.history.save()
+
         event.accept()

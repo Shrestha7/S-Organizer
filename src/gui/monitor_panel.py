@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
+    QFileDialog,
     QHeaderView,
     QLabel,
     QPushButton,
@@ -14,6 +18,44 @@ from PyQt6.QtWidgets import (
 
 from src.core.file_monitor import EventType, FileEvent
 from src.main import FileOrganizer
+
+
+class OneShotScanWorker(QThread):
+    """Worker thread for one-shot folder scan."""
+
+    finished = pyqtSignal(int)
+    error = pyqtSignal(str)
+
+    def __init__(self, organizer: FileOrganizer, folder: Path) -> None:
+        super().__init__()
+        self.organizer = organizer
+        self.folder = folder
+
+    def run(self) -> None:
+        try:
+            count = 0
+            pattern = "**/*"
+            for file_path in self.folder.glob(pattern):
+                if not file_path.is_file():
+                    continue
+
+                # Create a synthetic file event
+                event = FileEvent(
+                    event_type=EventType.CREATED,
+                    source_path=file_path,
+                    is_directory=False,
+                )
+
+                # Process against rules
+                results = self.organizer.rule_engine.process_event(event)
+                for result in results:
+                    if result.operation:
+                        self.organizer.history.add(result.operation)
+                        count += 1
+
+            self.finished.emit(count)
+        except Exception as e:
+            self.error.emit(str(e))
 
 
 class MonitorPanel(QWidget):
@@ -54,6 +96,20 @@ class MonitorPanel(QWidget):
         self.stop_button.clicked.connect(self._stop_monitoring)
         self.stop_button.setEnabled(False)
         button_layout.addWidget(self.stop_button)
+
+        # One-shot scan
+        scan_layout = QVBoxLayout()
+        self.scan_now_button = QPushButton("Scan Folder Once")
+        self.scan_now_button.setToolTip(
+            "Run all rules against a folder once (no continuous monitoring)"
+        )
+        self.scan_now_button.clicked.connect(self._scan_now)
+        scan_layout.addWidget(self.scan_now_button)
+
+        self.scan_status_label = QLabel("")
+        scan_layout.addWidget(self.scan_status_label)
+
+        button_layout.addLayout(scan_layout)
 
         self.clear_button = QPushButton("Clear Log")
         self.clear_button.clicked.connect(self._clear_log)
@@ -153,6 +209,34 @@ class MonitorPanel(QWidget):
         self.event_table.setRowCount(0)
         self._events.clear()
         self.count_label.setText("Events: 0")
+
+    def _scan_now(self) -> None:
+        """Scan a folder once against all rules."""
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder to Scan")
+        if not folder:
+            return
+
+        folder_path = Path(folder)
+        if not folder_path.exists():
+            return
+
+        self.scan_now_button.setEnabled(False)
+        self.scan_status_label.setText("Scanning...")
+
+        self._scan_worker = OneShotScanWorker(self.organizer, folder_path)
+        self._scan_worker.finished.connect(self._on_scan_complete)
+        self._scan_worker.error.connect(self._on_scan_error)
+        self._scan_worker.start()
+
+    def _on_scan_complete(self, count: int) -> None:
+        """Handle scan completion."""
+        self.scan_now_button.setEnabled(True)
+        self.scan_status_label.setText(f"Scan complete: {count} file(s) processed")
+
+    def _on_scan_error(self, error_msg: str) -> None:
+        """Handle scan error."""
+        self.scan_now_button.setEnabled(True)
+        self.scan_status_label.setText(f"Scan failed: {error_msg}")
 
     def refresh_status(self) -> None:
         """Refresh the monitoring status."""

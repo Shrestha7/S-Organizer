@@ -53,7 +53,7 @@ jobs:
 
       - name: Build exe with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --clean --noconfirm --name "S-Organizer" --noupx src/main.py
+          pyinstaller --onefile --windowed --clean --noconfirm --name "S-Organizer" --noupx --add-data "src/resources/icons;src/resources/icons" src/main.py
 
       - name: Install Inno Setup
         run: choco install innosetup -y

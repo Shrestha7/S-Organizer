@@ -191,8 +191,11 @@ def get_template_categories() -> list[str]:
     return sorted(get_templates_by_category().keys())
 
 
-def get_templates_by_category() -> dict[str, list[RuleTemplate]]:
+def get_templates_by_category(category: str | None = None) -> dict[str, list[RuleTemplate]]:
     """Get templates grouped by category.
+
+    Args:
+        category: Optional category name to filter by. Returns all if None.
 
     Returns:
         Dictionary mapping category names to template lists.
@@ -201,6 +204,8 @@ def get_templates_by_category() -> dict[str, list[RuleTemplate]]:
     categories: dict[str, list[RuleTemplate]] = {}
 
     for template in templates:
+        if category and template.category != category:
+            continue
         if template.category not in categories:
             categories[template.category] = []
         categories[template.category].append(template)

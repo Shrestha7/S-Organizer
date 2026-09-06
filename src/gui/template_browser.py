@@ -107,7 +107,7 @@ class TemplateBrowser(QDialog):
         category = current.text()
         self.template_list.clear()
 
-        templates = get_templates_by_category(category)
+        templates = get_templates_by_category(category).get(category, [])
         for template in templates:
             item = QListWidgetItem(template.name)
             item.setData(256, template)

@@ -1,0 +1,15 @@
+{
+  "name": "Sort Images by Date",
+  "enabled": true,
+  "trigger": {
+    "folder": "~/Downloads",
+    "recursive": false
+  },
+  "match": {
+    "extensions": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"]
+  },
+  "action": {
+    "type": "move",
+    "destination": "~/Pictures/{year}/{month}/{name}{extension}"
+  }
+}

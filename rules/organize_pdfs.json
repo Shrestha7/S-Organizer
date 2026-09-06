@@ -1,0 +1,15 @@
+{
+  "name": "Move PDFs to Documents",
+  "enabled": true,
+  "trigger": {
+    "folder": "~/Downloads",
+    "recursive": false
+  },
+  "match": {
+    "extensions": [".pdf"]
+  },
+  "action": {
+    "type": "move",
+    "destination": "~/Documents/PDFs/{name}{extension}"
+  }
+}

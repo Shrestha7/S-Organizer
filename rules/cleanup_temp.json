@@ -1,0 +1,15 @@
+{
+  "name": "Delete Temp Files",
+  "enabled": true,
+  "trigger": {
+    "folder": "~/Downloads",
+    "recursive": false
+  },
+  "match": {
+    "extensions": [".tmp", ".temp", ".bak"],
+    "max_age_days": 7
+  },
+  "action": {
+    "type": "delete"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Move Documents",
+  "enabled": true,
+  "trigger": {
+    "folder": "~/Downloads",
+    "recursive": false
+  },
+  "match": {
+    "extensions": [".docx", ".doc", ".txt", ".rtf", ".odt"]
+  },
+  "action": {
+    "type": "move",
+    "destination": "~/Documents/{extension}/{name}{extension}"
+  }
+}

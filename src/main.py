@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src import __version__  # noqa: E402
 from src.core.file_monitor import FileEvent, FileMonitor, WatchConfig  # noqa: E402
 from src.core.history import History  # noqa: E402
 from src.core.rule_engine import RuleEngine  # noqa: E402
@@ -174,7 +175,7 @@ def main() -> None:
         sys.exit(app.exec())
     else:
         # CLI mode
-        print("S-Organizer v0.1.0")
+        print(f"S-Organizer v{__version__}")
         print("Use 'from src.main import FileOrganizer' to import the controller.")
         print("Run without arguments or with --gui to launch the GUI.")
 

@@ -49,17 +49,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller packaging
 
       - name: Build exe with PyInstaller
         run: |
           pyinstaller --onefile --windowed --clean --noconfirm --name "S-Organizer" --noupx src/main.py
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc installer\s-organizer.iss
 
       - name: Upload exe artifact
         uses: actions/upload-artifact@v4
         with:
           name: S-Organizer-exe
           path: dist/S-Organizer.exe
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: S-Organizer-installer
+          path: installer_output/*.exe
 
   build-package:
     needs: test
@@ -101,6 +115,12 @@ jobs:
           name: S-Organizer-exe
           path: exe/
 
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: S-Organizer-installer
+          path: installer/
+
       - name: Download package artifacts
         uses: actions/download-artifact@v4
         with:
@@ -112,5 +132,6 @@ jobs:
         with:
           files: |
             exe/S-Organizer.exe
+            installer/*.exe
             dist/*
           generate_release_notes: true

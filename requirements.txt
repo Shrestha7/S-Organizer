@@ -4,3 +4,4 @@ send2trash>=1.8
 PyPDF2>=3.0
 python-docx>=0.8
 pyinstaller>=6.0
+packaging>=21.0

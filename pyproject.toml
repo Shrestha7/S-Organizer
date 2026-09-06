@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "s-organizer"
-version = "0.1.0"
+dynamic = ["version"]
 description = "S-Organizer - Automatic file organizer with PyQt6 GUI"
 readme = "README.md"
 license = "Apache-2.0"
@@ -28,6 +28,7 @@ dependencies = [
     "PyQt6>=6.5",
     "watchdog>=3.0",
     "send2trash>=1.8",
+    "packaging>=21.0",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,9 @@ s-organizer = "src.main:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[tool.hatch.version]
+path = "src/__init__.py"
 
 [tool.ruff]
 target-version = "py310"

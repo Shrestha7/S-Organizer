@@ -13,14 +13,21 @@ Automatic file organization with PyQt6 GUI.
 
 ## Installation
 
+### Option 1: Download EXE (Windows)
+1. Go to [Releases](https://github.com/Shrestha7/S-Organizer/releases)
+2. Download `S-Organizer.exe`
+3. **Windows Defender Warning**: If you see a false positive warning, click "More info" → "Run anyway" or add an exclusion for the file
+
+### Option 2: Install with pip
 ```bash
-# Clone the repository
+pip install s-organizer
+```
+
+### Option 3: From source
+```bash
 git clone https://github.com/Shrestha7/S-Organizer.git
 cd s-organizer
-
-# Install dependencies
 pip install -r requirements.txt
-
 # Or install in development mode
 pip install -e ".[dev,content]"
 ```

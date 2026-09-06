@@ -224,8 +224,6 @@ def scan_folder(folder: str, config: AppConfig | None = None) -> None:
         folder: Path to folder to scan.
         config: Optional configuration.
     """
-    from pathlib import Path
-
     config = config or load_config()
     ensure_directories(config)
 
@@ -266,7 +264,7 @@ def main() -> None:
     args = parse_args()
 
     # Load config first to get log settings
-    config = load_config(args.config)
+    config = load_config(Path(args.config) if args.config else None)
 
     # Set up logging
     log_handlers: list[logging.Handler] = [logging.StreamHandler()]

@@ -272,11 +272,12 @@ class DuplicatePanel(QWidget):
                 row += 1
 
     def _format_size(self, size: int) -> str:
+        size_float = float(size)
         for unit in ["B", "KB", "MB", "GB"]:
-            if size < 1024:
-                return f"{size:.1f} {unit}"
-            size /= 1024
-        return f"{size:.1f} TB"
+            if size_float < 1024:
+                return f"{size_float:.1f} {unit}"
+            size_float /= 1024
+        return f"{size_float:.1f} TB"
 
     def _select_all_duplicates(self) -> None:
         """Select all duplicate files (not originals)."""
@@ -351,8 +352,8 @@ class DuplicatePanel(QWidget):
                             action=FileAction.MOVE,
                             source=Path(file_path),
                             destination=dest_path,
+                            conflict_resolution=ConflictResolution.OVERWRITE,
                         ),
-                        ConflictResolution.OVERWRITE,
                     )
                     if result.success:
                         processed += 1
@@ -365,7 +366,6 @@ class DuplicatePanel(QWidget):
                             action=FileAction.DELETE,
                             source=Path(file_path),
                         ),
-                        ConflictResolution.OVERWRITE,
                     )
                     if result.success:
                         processed += 1

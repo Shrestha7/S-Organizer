@@ -227,8 +227,8 @@ class MainWindow(QMainWindow):
 
     def _on_update_check_complete(self, info: object) -> None:
         """Handle update check completion."""
-        # info is an UpdateInfo instance from the worker thread
-        assert isinstance(info, UpdateInfo)
+        if not isinstance(info, UpdateInfo):
+            return
 
         if info.has_update:
             self._show_update_available(info)

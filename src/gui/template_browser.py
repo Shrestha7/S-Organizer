@@ -24,7 +24,7 @@ from src.rules.templates import (
 class TemplateBrowser(QDialog):
     """Dialog for browsing and selecting rule templates."""
 
-    template_selected = pyqtSignal(dict)
+    template_selected = pyqtSignal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

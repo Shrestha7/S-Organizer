@@ -408,12 +408,12 @@ class RuleEditor(QWidget):
         dialog.template_selected.connect(self._apply_template)
         dialog.exec()
 
-    def _apply_template(self, template: dict) -> None:
+    def _apply_template(self, template: object) -> None:
         """Apply a template to create a new rule."""
-        rule_data = template["rule"]
-
-        # Create rule from template
-        rule = Rule.from_dict(rule_data)
+        from src.rules.templates import RuleTemplate
+        if not isinstance(template, RuleTemplate):
+            return
+        rule = template.rule
 
         # Generate unique name
         base_name = rule.name
@@ -443,11 +443,12 @@ class RuleEditor(QWidget):
         """Format size in bytes to human-readable string."""
         if size_bytes is None:
             return ""
+        size = float(size_bytes)
         for unit in ["B", "KB", "MB", "GB"]:
-            if size_bytes < 1024:
-                return f"{size_bytes:.0f}{unit}" if unit == "B" else f"{size_bytes:.0f}{unit}"
-            size_bytes /= 1024
-        return f"{size_bytes:.0f}TB"
+            if size < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} TB"
 
     def refresh(self) -> None:
         """Refresh the rule list."""

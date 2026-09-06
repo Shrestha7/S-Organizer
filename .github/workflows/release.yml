@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: S-Organizer-installer
-          path: installer_output/*.exe
+          path: installer/installer_output/*.exe
 
   build-package:
     needs: test

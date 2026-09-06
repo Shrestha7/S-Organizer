@@ -340,10 +340,9 @@ class MainWindow(QMainWindow):
                 close_fds=True,
             )
 
-        app = QApplication.instance()
-        if app:
-            app.quit()
-        sys.exit(0)
+        # Force kill immediately to release file handle
+        import os
+        os._exit(0)
 
     def closeEvent(self, event) -> None:  # noqa: N802
         """Handle window close event."""

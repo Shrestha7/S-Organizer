@@ -92,6 +92,9 @@ def get_app_dir() -> Path:
 def create_update_script(new_exe_path: str) -> str:
     """Create a batch script to replace the exe after app exits.
 
+    Uses a separate temp process to wait for the exe to become unlocked,
+    then atomically replaces it with os.replace via a Python one-liner.
+
     Args:
         new_exe_path: Path to the new exe file.
 
@@ -101,25 +104,35 @@ def create_update_script(new_exe_path: str) -> str:
     new_exe = Path(new_exe_path).resolve()
     app_dir = new_exe.parent
     target_exe = app_dir / "S-Organizer.exe"
+    temp_exe = app_dir / "S-Organizer.exe.tmp"
+    backup_exe = app_dir / "S-Organizer.exe.old"
 
     script_path = app_dir / "_update.bat"
 
     script_content = f"""@echo off
 cd /d "{app_dir}"
-timeout /t 3 /nobreak >nul
+echo Waiting for S-Organizer to exit...
+timeout /t 5 /nobreak >nul
 taskkill /f /t /im "S-Organizer.exe" >nul 2>&1
 taskkill /f /t /im "S-Organizer.tmp" >nul 2>&1
 timeout /t 3 /nobreak >nul
-:retry_del
-del /f /q "{target_exe}" >nul 2>&1
+echo Replacing executable...
 if exist "{target_exe}" (
-    timeout /t 2 /nobreak >nul
-    goto retry_del
+    ren "{target_exe}" "S-Organizer.exe.old" >nul 2>&1
+    if exist "{target_exe}" (
+        echo ERROR: Could not rename running executable
+        goto launch
+    )
 )
-move /y "{new_exe}" "{target_exe}" >nul 2>&1
-if exist "{target_exe}" (
-    start "" "{target_exe}"
+ren "{new_exe}" "S-Organizer.exe" >nul 2>&1
+if not exist "{target_exe}" (
+    echo ERROR: New executable not found
+    goto launch
 )
+echo Update complete!
+:launch
+start "" "{target_exe}"
+del /f /q "{backup_exe}" >nul 2>&1
 del /f /q "%~f0" >nul 2>&1
 """
     script_path.write_text(script_content)

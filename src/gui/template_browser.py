@@ -58,7 +58,7 @@ class TemplateBrowser(QDialog):
         # Details panel
         details_widget = QWidget()
         details_layout = QVBoxLayout(details_widget)
-        details_layout.setContentsContentsMargins(0, 0, 0, 0)
+        details_layout.setContentsMargins(0, 0, 0, 0)
 
         self.details_title = QLabel()
         self.details_title.setStyleSheet("font-size: 12px; font-weight: bold;")
@@ -109,7 +109,7 @@ class TemplateBrowser(QDialog):
 
         templates = get_templates_by_category(category)
         for template in templates:
-            item = QListWidgetItem(template["name"])
+            item = QListWidgetItem(template.name)
             item.setData(256, template)
             self.template_list.addItem(item)
 
@@ -129,14 +129,14 @@ class TemplateBrowser(QDialog):
         self.use_btn.setEnabled(True)
 
         # Show details
-        self.details_title.setText(template["name"])
-        details = f"Category: {template['category']}\n\n"
-        details += f"Description: {template['description']}\n\n"
-        details += f"Action: {template['rule']['action']['type'].title()}\n"
-        if "destination" in template["rule"]["action"]:
-            details += f"Destination: {template['rule']['action']['destination']}\n"
-        if "template" in template["rule"]["action"]:
-            details += f"Rename pattern: {template['rule']['action']['template']}\n"
+        self.details_title.setText(template.name)
+        details = f"Category: {template.category}\n\n"
+        details += f"Description: {template.description}\n\n"
+        details += f"Action: {template.rule.action.type.value.title()}\n"
+        if template.rule.action.destination:
+            details += f"Destination: {template.rule.action.destination}\n"
+        if template.rule.action.template:
+            details += f"Rename pattern: {template.rule.action.template}\n"
         self.details_text.setText(details)
 
     def _on_use_template(self) -> None:

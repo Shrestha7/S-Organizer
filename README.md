@@ -10,20 +10,27 @@ Automatic file organization with PyQt6 GUI.
 - **Undo support** - Reverse any file operation from history
 - **Duplicate detection** - Find and handle duplicate files
 - **JSON rules** - Easy to create, share, and version control rules
+- **Auto-update** - Built-in check for updates (Help menu in GUI)
 
 ## Installation
 
-### Option 1: Download EXE (Windows)
+### Option 1: Windows Installer (Recommended)
+1. Go to [Releases](https://github.com/Shrestha7/S-Organizer/releases)
+2. Download `S-Organizer-0.2.0-Setup.exe`
+3. Run the installer — it registers in **Control Panel > Programs and Features** for easy uninstall
+4. **Windows Defender Warning**: If you see a false positive warning, click "More info" → "Run anyway" or add an exclusion for the file
+
+### Option 2: Standalone EXE (Windows)
 1. Go to [Releases](https://github.com/Shrestha7/S-Organizer/releases)
 2. Download `S-Organizer.exe`
 3. **Windows Defender Warning**: If you see a false positive warning, click "More info" → "Run anyway" or add an exclusion for the file
 
-### Option 2: Install with pip
+### Option 3: Install with pip
 ```bash
 pip install s-organizer
 ```
 
-### Option 3: From source
+### Option 4: From source
 ```bash
 git clone https://github.com/Shrestha7/S-Organizer.git
 cd s-organizer

@@ -6,7 +6,7 @@ Thank you for your interest in contributing to S-Organizer! This document provid
 
 1. **Fork and clone the repository**
    ```bash
-   git clone https://github.com/yourusername/s-organizer.git
+   git clone https://github.com/Shrestha7/S-Organizer.git
    cd s-organizer
    ```
 

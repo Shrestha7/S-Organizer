@@ -15,7 +15,7 @@ Automatic file organization with PyQt6 GUI.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/s-organizer.git
+git clone https://github.com/Shrestha7/S-Organizer.git
 cd s-organizer
 
 # Install dependencies

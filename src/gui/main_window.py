@@ -56,6 +56,13 @@ class MainWindow(QMainWindow):
         self._setup_status_bar()
         self._connect_notifications()
 
+        # Auto-start monitoring if configured
+        if self.organizer.config.auto_start:
+            self.organizer.start()
+            self.monitor_panel.status_label.setText("Status: Active")
+            self.monitor_panel.start_button.setEnabled(False)
+            self.monitor_panel.stop_button.setEnabled(True)
+
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle("S-Organizer")

@@ -326,6 +326,7 @@ class RuleEditor(QWidget):
             self.organizer.rule_engine.remove_rule(self._current_rule.name)
 
         self.organizer.rule_engine.add_rule(rule)
+        self.organizer.save_rules()
         self._load_rules()
         self.rules_changed.emit()
 
@@ -342,6 +343,7 @@ class RuleEditor(QWidget):
         if ok and name:
             rule = Rule(name=name)
             self.organizer.rule_engine.add_rule(rule)
+            self.organizer.save_rules()
             self._load_rules()
             self.rules_changed.emit()
 
@@ -361,6 +363,7 @@ class RuleEditor(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             self.organizer.rule_engine.remove_rule(rule.name)
+            self.organizer.save_rules()
             self._load_rules()
             self.rules_changed.emit()
             self._current_rule = None
@@ -399,6 +402,7 @@ class RuleEditor(QWidget):
         )
 
         self.organizer.rule_engine.add_rule(new_rule)
+        self.organizer.save_rules()
         self._load_rules()
         self.rules_changed.emit()
 
@@ -423,6 +427,7 @@ class RuleEditor(QWidget):
             counter += 1
 
         self.organizer.rule_engine.add_rule(rule)
+        self.organizer.save_rules()
         self._load_rules()
         self.rules_changed.emit()
 

@@ -83,6 +83,12 @@ class FileOrganizer:
         count = self.rule_engine.load_rules_from_directory(rules_dir)
         logger.info("Loaded %d rules", count)
 
+    def save_rules(self) -> None:
+        """Save all rules to the rules directory."""
+        rules_dir = get_data_dir() / self.config.rules_dir
+        count = self.rule_engine.save_rules_to_directory(rules_dir)
+        logger.info("Saved %d rules", count)
+
     def _on_file_event(self, event: FileEvent) -> None:
         """Handle a file system event.
 

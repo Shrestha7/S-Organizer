@@ -111,6 +111,34 @@ class RuleEngine:
 
         return count
 
+    def save_rules_to_directory(self, directory: Path) -> int:
+        """Save all rules to JSON files in a directory.
+
+        Args:
+            directory: Directory to save rule files to.
+
+        Returns:
+            Number of rules saved.
+        """
+        directory.mkdir(parents=True, exist_ok=True)
+
+        # Clear existing rule files
+        for json_file in directory.glob("*.json"):
+            json_file.unlink()
+
+        # Save each rule
+        count = 0
+        for rule in self.rules:
+            try:
+                safe_name = rule.name.replace("/", "_").replace("\\", "_")
+                json_file = directory / f"{safe_name}.json"
+                rule.to_json_file(json_file)
+                count += 1
+            except Exception as e:
+                logger.error("Failed to save rule %s: %s", rule.name, e)
+
+        return count
+
     def process_event(self, event: FileEvent) -> list[ExecutionResult]:
         """Process a file event against all enabled rules.
 

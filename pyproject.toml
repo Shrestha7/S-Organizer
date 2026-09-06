@@ -45,6 +45,9 @@ dev = [
 [project.gui-scripts]
 s-organizer = "src.main:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 100

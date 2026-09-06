@@ -84,6 +84,8 @@ organizer.add_watched_folder("~/Downloads")
 organizer.start()
 ```
 
+## Features Guide
+
 ### Creating Rules
 
 Create a JSON file in the `rules/` directory:
@@ -115,13 +117,13 @@ Create a JSON file in the `rules/` directory:
 #### Match
 - `extensions`: List of file extensions (e.g., [".pdf", ".txt"])
 - `name_pattern`: Glob pattern (e.g., "*.pdf", "report_*")
-- `min_size` / `max_size`: Size limits (e.g., "10MB", "1GB")
-- `min_age_days` / `max_age_days`: Age limits
-- `content_keywords`: Search within file contents
+- `min_size` / `max_size`: Size limits (supports "1MB", "100KB", "1GB")
+- `min_age_days` / `max_age_days`: Age limits in days
+- `content_keywords`: Search within file contents (PDF, DOCX, XLSX, CSV, TXT, images)
 
 #### Action
 - `type`: "move", "copy", "rename", or "delete"
-- `destination`: Target path with placeholders
+- `destination`: Target path with placeholders (for move/copy)
 - `template`: New name template (for rename)
 
 #### Placeholders
@@ -130,6 +132,59 @@ Create a JSON file in the `rules/` directory:
 - `{date}` - Last modified date (YYYY-MM-DD)
 - `{year}`, `{month}`, `{day}` - Date components
 - `{parent}` - Parent directory name
+
+### Rule Templates
+
+Click the **Templates** button in the Rule Editor to browse pre-built templates:
+
+- **Document Organization** - Sort PDFs, Word docs, spreadsheets
+- **Media Sorting** - Organize photos, videos, audio files
+- **Archive Management** - Handle old files and backups
+- **Development Files** - Sort code, configs, logs
+
+Select a template and click "Use Template" to create a new rule instantly.
+
+### Duplicate Detection
+
+1. Open the **Duplicates** tab
+2. Select a folder and click **Scan for Duplicates**
+3. Review the results — duplicates are grouped by content hash
+4. Choose an action:
+   - **Keep Original (oldest)** - Skip the oldest file in each group
+   - **Move Duplicates to Folder** - Move duplicate copies to a specified folder
+   - **Delete Duplicates** - Send duplicates to trash
+5. Click **Apply Action to Selected** or use **Export to CSV** to save results
+
+### Logging
+
+Configure logging in **Settings**:
+
+- **Log Level**: DEBUG, INFO, WARNING, or ERROR
+- **Log File**: Path to a log file (leave empty for stdout only)
+
+Logs are automatically rotated (max 5MB, keep 3 backups).
+
+### System Tray
+
+- Double-click the tray icon to show/hide the main window
+- Right-click for quick access to:
+  - Start/Stop monitoring
+  - Settings
+  - Quit
+- Desktop notifications for file operations (when enabled)
+
+### Auto-Update
+
+1. Go to **Help > Check for Updates**
+2. If an update is available, click **Download**
+3. Restart the app to apply the update
+
+### History and Undo
+
+- All file operations are logged in the **History** tab
+- Click **Undo** to reverse any operation
+- History persists across sessions (stored in `history/history.json`)
+- Export history to JSON for backup
 
 ## Development
 
@@ -158,9 +213,11 @@ s-organizer/
 │   ├── core/           # File monitoring, rule engine, operations
 │   ├── rules/          # Rule definitions and matching
 │   ├── gui/            # PyQt6 GUI components
+│   ├── resources/      # Icons and assets
 │   └── utils/          # Configuration and helpers
-├── tests/              # Test suite
+├── tests/              # Test suite (43 tests)
 ├── rules/              # Sample JSON rule files
+├── installer/          # Inno Setup installer script
 ├── docs/               # Documentation
 └── main.py             # Entry point
 ```

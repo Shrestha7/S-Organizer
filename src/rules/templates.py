@@ -182,6 +182,15 @@ def get_templates() -> list[RuleTemplate]:
     ]
 
 
+def get_template_categories() -> list[str]:
+    """Get list of template categories.
+
+    Returns:
+        List of unique category names.
+    """
+    return sorted(get_templates_by_category().keys())
+
+
 def get_templates_by_category() -> dict[str, list[RuleTemplate]]:
     """Get templates grouped by category.
 

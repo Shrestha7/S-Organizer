@@ -414,10 +414,12 @@ class RuleEditor(QWidget):
 
     def _apply_template(self, template: object) -> None:
         """Apply a template to create a new rule."""
+        import copy
+
         from src.rules.templates import RuleTemplate
         if not isinstance(template, RuleTemplate):
             return
-        rule = template.rule
+        rule = copy.deepcopy(template.rule)
 
         # Generate unique name
         base_name = rule.name

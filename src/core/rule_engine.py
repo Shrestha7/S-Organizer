@@ -114,6 +114,9 @@ class RuleEngine:
     def save_rules_to_directory(self, directory: Path) -> int:
         """Save all rules to JSON files in a directory.
 
+        Only deletes rule files previously created by this engine.
+        Other JSON files in the directory are left untouched.
+
         Args:
             directory: Directory to save rule files to.
 
@@ -122,9 +125,22 @@ class RuleEngine:
         """
         directory.mkdir(parents=True, exist_ok=True)
 
-        # Clear existing rule files
+        # Build set of filenames we will create
+        rule_filenames: set[str] = set()
+        for rule in self.rules:
+            safe_name = rule.name.replace("/", "_").replace("\\", "_")
+            rule_filenames.add(f"{safe_name}.json")
+
+        # Delete only rule files that are no longer in the engine
         for json_file in directory.glob("*.json"):
-            json_file.unlink()
+            if json_file.name not in rule_filenames:
+                # Check if it's a rule file by trying to load it
+                try:
+                    Rule.from_json_file(json_file)
+                    json_file.unlink()
+                except Exception:
+                    # Not a rule file, leave it alone
+                    pass
 
         # Save each rule
         count = 0

@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
             self.monitor_panel.status_label.setText("Status: Active")
             self.monitor_panel.start_button.setEnabled(False)
             self.monitor_panel.stop_button.setEnabled(True)
+            self.monitor_status_label.setText("Monitoring: Active")
 
     def _setup_ui(self) -> None:
         """Set up the user interface."""
